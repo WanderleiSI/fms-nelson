@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="my-3 p-3 bg-body rounded shadow-sm">
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-10">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'listagem_renda' %}">Renda</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Minha renda</li>
+                    </ol>
+                </nav>
+            </div>
+        
+            <div class="col-md-2">
+                <a href="{% url 'add_renda' %}" class="btn btn-primary">Adicionar Renda</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-5">
+        {% include 'dashboard/mensagens.html' %}
+        {% if rendas.count %}
+        <table class="table table-stripped table-hover">
+            <thead>
+                <tr>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ganho in obj_pagina %}
+                <tr>
+                    <td>{{ganho.descricao}}</td>
+                    <td>{{ganho.valor}}</td>
+                    <td>{{ganho.data}}</td>
+                    <td>
+                        <a href="{% url 'editar_renda' ganho.id %}" class="btn btn-secondary btn-sm">Editar</a>
+                        <a href="{% url 'delete_renda' ganho.id %}" class="btn btn-danger btn-sm">Deletar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="container">
+            <div class="float-right">
+                Página {{obj_pagina.number}} de {{ obj_pagina.paginator.num_pages }}
+            </div>
+            <ul class="pagination justify-content-center">
+                {% if obj_pagina.has_previous %}
+                <li {% if obj_pagina.number == 1 %} class="page-item active" {% endif %}>
+                    <a class="page-link" href="?page=1">&laquo; 1</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ obj_pagina.previous_page_number }}">Anterior</a>
+                </li>
+                {% endif %}
+                
+                {% if obj_pagina.has_next %}
+                <li class="page-item"> 
+                    <a class="page-link" href="?page={{ obj_pagina.next_page_number }}">Próximo</a>
+                </li>
+                <li class="page-item"> 
+                    <a class="page-link" href="?page={{ obj_pagina.paginator.num_pages }}">{{ obj_pagina.paginator.num_pages}} &raquo;</a>
+                </li>
+                {% endif %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="my-3 p-3 bg-body rounded shadow-sm">
+    <div class="d-flex text-muted pt-3">
+      <svg class="bd-placeholder-img flex-shrink-0 me-2 rounded" width="32" height="32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: 32x32" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="blue"/><text x="50%" y="50%" fill="blue" dy=".3em">32x32</text></svg>
+
+      <div class="pb-3 mb-0 small lh-sm border-bottom w-100">
+            <div class="d-flex justify-content-between">
+                <h6>
+                    <strong class="text-gray-dark">Renda total:</strong>
+                </h6>
+                <a href="{% url 'estatistica_renda' %}" class="btn btn-primary">Estatísticas</a>
+                
+            </div>
+            <span class="d-block">
+                <h6>R$ {{total_ganho}}</h6>
+            </span>
+      </div>
+    </div>
+</div>
+{% endblock %}

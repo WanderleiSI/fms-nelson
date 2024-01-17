@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="my-3 p-3 bg-body rounded shadow-sm">
+    <div class="container mt-5">
+        <div class="row mt-5">
+            <div class="col-md-10">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'minhas_despesas' %}">Despesas</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Minhas estatísticas</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="my-3 p-3 bg-body rounded shadow-sm">
+    <div class="d-flex text-muted pt-3">
+      <svg class="bd-placeholder-img flex-shrink-0 me-2 rounded" width="32" height="32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: 32x32" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="red"/><text x="50%" y="50%" fill="red" dy=".3em">32x32</text></svg>
+
+      <div class="pb-3 mb-0 small lh-sm border-bottom w-100">
+            <div class="d-flex justify-content-between">
+                <h6>
+                    <strong class="text-gray-dark">Valor total de despesas:</strong>
+                </h6>
+                <h6>R$ {{total_despesas}}</h6>
+            </div>
+      </div>
+    </div>
+</div>
+
+<div class="pb-3 mb-0 small lh-sm border-bottom w-100">
+  <div class="d-flex justify-content-between">
+      <h6>
+          <strong>Despesas por Categoria:</strong>
+      </h6>
+  </div>
+</div>
+<div class="my-3 p-3 bg-body rounded shadow-sm">
+    <div id="container" style="width: 75%;">
+        <canvas id="graph" data-url="{% url 'graph' %}"></canvas>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+<script>
+    $(function () {
+      var $despesaChart = $("#graph");
+      $.ajax({
+        url: $despesaChart.data("url"),
+        success: function (data) {
+
+          var ctx = $despesaChart[0].getContext("2d");
+
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: data.labels,
+              datasets: [{
+                label: 'Despesas',
+                backgroundColor: 'blue',
+                data: data.data
+              }]          
+            },
+            options: {
+              responsive: true,
+              legend: {
+                position: 'top',
+              },
+              title: {
+                display: true,
+                text: 'Despesas por categoria'
+              }
+            }
+          });
+
+        }
+      });
+
+    });
+
+  </script>
+
+<div class="pb-3 mb-0 small lh-sm border-bottom w-100">
+  <div class="d-flex justify-content-between">
+      <h6>
+          <strong>Despesas por Mês:</strong>
+      </h6>
+  </div>
+</div>
+<div class="my-3 p-3 bg-body rounded shadow-sm">
+    <div id="container" style="width: 75%;">
+        <canvas id="graph_despesas_mensal" data-url="{% url 'graph_despesas_mensal' %}"></canvas>
+    </div>
+</div>
+
+<script>
+    $(function () {
+      var $despesaChart2 = $("#graph_despesas_mensal");
+      $.ajax({
+        url: $despesaChart2.data("url"),
+        success: function (data) {
+
+          var ctx = $despesaChart2[0].getContext("2d");
+
+          new Chart(ctx, {
+            type: 'pie',
+            data: {
+              labels: data.labels,
+              datasets: [{
+                label: 'Despesas',
+                backgroundColor:[
+                    'blue',
+                    'red',
+                    'gray',
+                    'yellow',
+                    'black',
+                    'purple',
+                    'green',
+                    'orange',
+                    'brown',
+                    'pink',
+                    'coral',
+                    'crimson',
+                ],
+                
+                data: data.data
+              }]          
+            },
+            options: {
+              responsive: true,
+              legend: {
+                position: 'top',
+              },
+              title: {
+                display: true,
+                text: 'Despesas por mês'
+              }
+            }
+          });
+
+        }
+      });
+
+    });
+
+  </script>
+
+<div class="pb-3 mb-0 small lh-sm border-bottom w-100">
+  <div class="d-flex justify-content-between">
+      <h6>
+          <strong>Despesas por Ano:</strong>
+      </h6>
+  </div>
+</div>
+<div class="my-3 p-3 bg-body rounded shadow-sm">
+  <div id="container" style="width: 75%;">
+      <canvas id="graph_despesas_anual" data-url="{% url 'graph_despesas_anual' %}"></canvas>
+  </div>
+</div>
+<script>
+  $(function () {
+
+    var $despesaChart3 = $("#graph_despesas_anual");
+    $.ajax({
+      url: $despesaChart3.data("url"),
+      success: function (data) {
+
+        var ctx = $despesaChart3[0].getContext("2d");
+
+        new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: data.labels,
+            datasets: [{
+              label: 'Despesas anuais',
+              backgroundColor:[
+                  'blue',
+                  'red',
+                  'gray',
+                  'yellow',
+                  'black',
+                  'purple',
+                  'green',
+                  'orange',
+                  'brown',
+                  'pink',
+                  'coral',
+                  'crimson',
+              ],
+              
+              data: data.data
+            }]          
+          },
+          options: {
+            responsive: true,
+            legend: {
+              position: 'top',
+            },
+            title: {
+              display: true,
+              text: 'Despesas por ano'
+            }
+          }
+        });
+
+      }
+    });
+
+  });
+
+</script>
+
+
+{% endblock content %}

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="my-3 p-3 bg-body rounded shadow-sm">
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-10">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'minhas_despesas' %}">Despesas</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Categorias</li>
+                    </ol>
+                </nav>
+            </div>
+        
+            <div class="col-md-2">
+                <a href="{% url 'add_categoria' %}" class="btn btn-primary btn-sm">Adicionar Categoria</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="my-3 p-3 bg-body rounded shadow-sm">
+    <div class="container mt-5">
+        {% include 'dashboard/mensagens.html' %}
+        <table class="table table-stripped table-hover">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for categoria in obj_pagina %}
+                <tr>
+                    <td>{{ categoria.nome }}</td>
+                    <td>
+                        <a href="{% url 'delete_categoria' categoria.id %}" class="btn btn-danger btn-sm">Deletar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="container">
+            <div class="float-right">
+                Página {{obj_pagina.number}} de {{ obj_pagina.paginator.num_pages }}
+            </div>
+            <ul class="pagination justify-content-center">
+                {% if obj_pagina.has_previous %}
+                <li {% if obj_pagina.number == 1 %} class="page-item active" {% endif %}>
+                    <a class="page-link" href="?page=1">&laquo; 1</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ obj_pagina.previous_page_number }}">Anterior</a>
+                </li>
+                {% endif %}
+                
+                {% if obj_pagina.has_next %}
+                <li class="page-item"> 
+                    <a class="page-link" href="?page={{ obj_pagina.next_page_number }}">Próximo</a>
+                </li>
+                <li class="page-item"> 
+                    <a class="page-link" href="?page={{ obj_pagina.paginator.num_pages }}">{{ obj_pagina.paginator.num_pages}} &raquo;</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

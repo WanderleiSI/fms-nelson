@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load crispy_forms_tags %}
+
+<div class="my-3 p-3 bg-body rounded shadow-sm">
+    <div class="container mt-5">
+        <div class="row mt-5">
+            <div class="col-md-10">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'listagem_renda' %}">Rendas</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Editar renda</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-5">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{form | crispy}}
+                <button type="submit" class="btn btn-success mt-3">Salvar edição</button>
+            </form>    
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load crispy_forms_tags %}
+
+<div class="my-3 p-3 bg-body rounded shadow-sm">
+    <div class="container mt-5">
+        <div class="row mt-5">
+            <div class="col-md-10">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'minhas_despesas' %}">Despesas</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Lançar Despesa</li>
+                    </ol>
+                </nav>
+            </div>     
+            <div class="col-md-2">
+                <a href="{% url 'add_categoria' %}" class="btn btn-primary btn-sm">Adicionar Categoria</a>
+            </div>       
+        </div>
+    </div>   
+    <div class="card mt-5">
+        <div class="card-body">
+            <form action="{% url 'criar_despesa' %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{form.descricao.errors}}
+                    <label for="">Descrição</label>
+                    <input type="text" name="descricao" class="form-control form-control-sm">
+                </div>
+                <div class="form-group row mb-4">
+                    <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Categoria</label>
+                    <div class="form-check form-check-inline">{{ form.categoria }}</div>
+                </div>
+                <div class="form-group">
+                    {{form.valor.errors}}
+                    <label for="">Valor</label>
+                    <input type="number" name="valor" class="form-control form-control-sm">
+                </div>
+                <div class="form-group">
+                    {{form.data.errors}}
+                    <label for="">Data</label>
+                    <input type="date" name="data" class="form-control form-control-sm">
+                </div>
+
+                <input type="submit" value="Lançar despesa" class="btn btn-primary mt-4 btn-primary-sm">
+            </form>    
+        </div>
+    </div>
+</div>
+{% endblock %}
