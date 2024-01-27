@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 
 class Categoria(models.Model):
     nome = models.CharField(max_length=250)
-    user = models.ForeignKey(to=User, on_delete=models.CASCADE)
+    user = models.IntegerField(null=False, blank=False)
 
     def __str__(self):
         return self.nome
@@ -16,7 +16,7 @@ class Ganho(models.Model):
     descricao = models.TextField()
     valor = models.FloatField()
     data = models.DateField(default=now)
-    user = models.ForeignKey(to=User, on_delete=models.CASCADE)
+    user = models.IntegerField(null=False, blank=False)
 
     def __str__(self):
         return self.descricao
@@ -24,10 +24,10 @@ class Ganho(models.Model):
 
 class Despesas(models.Model):
     descricao = models.TextField()
-    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
+    categoria = models.IntegerField(null=False, blank=False)
     valor = models.FloatField()
     data = models.DateField(default=now)
-    user = models.ForeignKey(to=User, on_delete=models.CASCADE)
+    user = models.IntegerField(null=False, blank=False)
 
     def __str__(self):
         return self.descricao

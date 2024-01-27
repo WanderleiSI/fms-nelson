@@ -10,20 +10,28 @@ from django.db.models import Sum
 import xlwt
 from django.views.generic.edit import CreateView
 from django.utils.decorators import method_decorator
+import requests
+import json
 
 # Create your views here.
 @login_required(login_url="/auth/login")
 def index(request):
-    despesas = Despesas.objects.filter(user=request.user)
-    ganhos = Ganho.objects.filter(user=request.user)
+    #despesas = Despesas.objects.filter(user=request.user)
+    #ganhos = Ganho.objects.filter(user=request.user)
+    responseDespesas = requests.get('https://api-despesa.azurewebsites.net/despesa/')
+    responseGanhos = requests.get('https://api-renda.azurewebsites.net/renda/')
+    #Como converter para json?
+    despesas = responseDespesas.json()
+    ganhos = responseGanhos.json()
+
     total_despesas = 0
     total_ganhos = 0
     saldo = 0
 
     for despesa in despesas:
-        total_despesas += despesa.valor
+        total_despesas += despesa['valor']
     for ganho in ganhos:
-        total_ganhos += ganho.valor
+        total_ganhos += ganho['valor']
 
     saldo = total_ganhos - total_despesas
 
@@ -56,65 +64,99 @@ class CreateDespesaView(CreateView):
 
 @login_required(login_url="/auth/login")
 def minhas_despesas(request):
-    despesas = Despesas.objects.filter(user=request.user)
-    ganhos = Ganho.objects.filter(user=request.user)
+    responseDespesas = requests.get('https://api-despesa.azurewebsites.net/despesa/')
+    responseGanhos = requests.get('https://api-renda.azurewebsites.net/renda/')
+    despesas = responseDespesas.json()
+    ganhos = responseGanhos.json()
+
     total_despesas = 0
     total_ganhos = 0
     saldo = 0
 
     for despesa in despesas:
-        total_despesas += despesa.valor
+        total_despesas += despesa['valor']
     for ganho in ganhos:
-        total_ganhos += ganho.valor
+        total_ganhos += ganho['valor']
 
     saldo = total_ganhos - total_despesas
-    paginator = Paginator(despesas, 5)
-    pagina_num = request.GET.get("page")
-    obj_pagina = Paginator.get_page(paginator, pagina_num)
+
+    #paginator = Paginator(despesas, 5)
+    #pagina_num = request.GET.get("page")
+    #obj_pagina = Paginator.get_page(paginator, pagina_num)
+
     context = {
         "despesas": despesas,
         "ganhos": ganhos,
         "total_despesas": total_despesas,
         "total_ganhos": total_ganhos,
         "saldo": saldo,
-        "obj_pagina": obj_pagina,
+        #"obj_pagina": obj_pagina,
     }
+
     return render(request, "despesas/minhas_despesas.html", context)
+
 
 
 @login_required(login_url="/auth/login")
 def edit_despesa(request, id):
-    despesa = Despesas.objects.get(pk=id)
-    categorias = Categoria.objects.filter(user=request.user)
-    context = {
-        "despesa": despesa,
-        "val": despesa,
-        "categorias": categorias,
-    }
+    url = f"'https://api-despesa.azurewebsites.net/despesa/'{id}/"
+    response_categorias = requests.get('https://api-despesa.azurewebsites.net/despesa/')
+    if response_categorias.content:
+        categorias = list({despesa['categoria']: despesa for despesa in response_categorias.json()}.values())
+    else:
+        categorias = []
+
     if request.method == "GET":
+        response = requests.get(url)
+        despesa = response.json()
+        context = {
+            "despesa": despesa,
+            "val": despesa,
+            "categorias": categorias,
+        }
         return render(request, "despesas/editar_despesa.html", context)
     if request.method == "POST":
         descricao = request.POST["descricao"]
-        categoria = request.POST["categoria"]
+        categoria_id = int(request.POST["categoria"])  # Altere 'categoria_nome' para 'categoria_id' e converta para int
         valor = request.POST["valor"]
         data = request.POST["data"]
 
-        despesa.user = request.user
-        despesa.descricao = descricao
-        despesa.categoria = Categoria.objects.get(nome=categoria)
-        despesa.valor = valor
-        despesa.data = data
-        despesa.save()
-        messages.success(request, "Despesa atualizada com sucesso!")
+        categoria = next((cat for cat in categorias if cat["id"] == categoria_id), None)  # Altere 'nome' para 'id'
+        
+        if not categoria:
+            messages.error(request, f"Categoria com id '{categoria_id}' não existe.")
+            return redirect("minhas_despesas")
+
+        despesa = {
+            "user": request.user.id,
+            "descricao": descricao,
+            "categoria": categoria["id"],
+            "valor": valor,
+            "data": data,
+        }
+        response = requests.put(url, data=despesa)
+
+        if response.status_code == 200:  # HTTP 200 OK success status response code indicates that the request has succeeded
+            messages.success(request, "Despesa atualizada com sucesso!")
+        else:
+            messages.error(request, "Erro ao atualizar despesa.")
 
         return redirect("minhas_despesas")
 
 
+
+
+
+
 @login_required(login_url="/auth/login")
 def remove_despesa(request, id):
-    despesa = Despesas.objects.get(pk=id)
-    despesa.delete()
-    messages.success(request, "Despesa removida com sucesso!")
+    url = f"https://api-despesa.azurewebsites.net/despesa/{id}/"
+    response = requests.delete(url)
+
+    if response.status_code == 204:  # HTTP 204 No Content success status response code indicates that the request has succeeded
+        messages.success(request, "Despesa removida com sucesso!")
+    else:
+        messages.error(request, "Erro ao remover despesa.")
 
     return redirect("minhas_despesas")
 
@@ -155,37 +197,54 @@ def remove_categoria(request, id):
     return redirect("listagem_categorias")
 
 
-@login_required(login_url="/auth/login")
 def listagem_ganhos(request):
-    rendas = Ganho.objects.filter(user=request.user)
+    response = requests.get('https://api-renda.azurewebsites.net/renda/')
+    rendas = response.json()
+
     paginator = Paginator(rendas, 5)
     pagina_num = request.GET.get("page")
-    obj_pagina = Paginator.get_page(paginator, pagina_num)
-    rendas = Ganho.objects.filter(user=request.user)
+    obj_pagina = paginator.get_page(pagina_num)
+
     total_ganho = 0
+    for ganho in rendas:
+        total_ganho += ganho['valor']
+    #total_ganho = sum(renda['valor'] for renda in rendas if renda['usuarioId'] == request.user.id)
 
-    for renda in rendas:
-        total_ganho += renda.valor
-
+    print(rendas)
     context = {
         "rendas": rendas,
         "obj_pagina": obj_pagina,
-        "rendas": rendas,
         "total_ganho": total_ganho,
     }
     return render(request, "rendas/listagem_renda.html", context)
 
+
+import requests
+import json
 
 @login_required(login_url="/auth/login")
 def add_renda(request):
     if request.method == "POST":
         form = GanhoForm(request.POST)
         if form.is_valid():
-            renda = form.save(commit=False)
-            renda.user = request.user
-            renda.save()
+            renda = form.cleaned_data  # Obter os dados limpos do formulário
 
-            messages.success(request, "Renda lançada com sucesso!")
+            # Converter a data para uma string no formato ISO
+            if 'data' in renda and renda['data']:
+                renda['data'] = renda['data'].isoformat()
+
+            # Converter os dados do formulário em JSON
+            data = json.dumps(renda)
+
+            # Fazer a requisição POST para a API
+            response = requests.post('https://api-renda.azurewebsites.net/renda/', data=data, headers={'Content-Type': 'application/json'})
+            
+            if response.status_code == 201:  # HTTP 201 Created indica que a requisição foi bem sucedida e levou à criação de um recurso
+                messages.success(request, "Renda lançada com sucesso!")
+            else:
+                print(response.status_code)
+                messages.error(request, "Erro ao lançar renda.")
+
             return redirect("listagem_renda")
         return render(request, "rendas/add_renda.html", {"form": form})
     form = GanhoForm()
@@ -224,21 +283,25 @@ def remove_renda(request, id):
     return redirect("listagem_renda")
 
 
-# Gera gráfico de gastos por categoria
 @login_required(login_url="/auth/login")
 def view_graph(request):
-    labels = []
-    data = []
+    responseDespesas = requests.get('https://api-despesa.azurewebsites.net/despesa/')
+    despesas = responseDespesas.json()
 
-    queryset = (
-        Despesas.objects.values("categoria__nome")
-        .annotate(categoria_valor=Sum("valor"))
-        .order_by("-categoria_valor")
-        .filter(user=request.user)
-    )
-    for entry in queryset:
-        labels.append(entry["categoria__nome"])
-        data.append(entry["categoria_valor"])
+    labels = []
+    data = {}
+
+    for despesa in despesas:
+        categoria = despesa['categoria']
+        valor = despesa['valor']
+
+        if categoria in data:
+            data[categoria] += valor
+        else:
+            data[categoria] = valor
+
+    labels = list(data.keys())
+    data = list(data.values())
 
     return JsonResponse(
         data={
@@ -248,21 +311,18 @@ def view_graph(request):
     )
 
 
-# Gera gráfico de renda por mês
+
 @login_required(login_url="/auth/login")
 def view_graph2(request):
+    responseRendas = requests.get('https://api-renda.azurewebsites.net/renda/')
+    rendas = responseRendas.json()
+
     labels = []
     data = []
 
-    queryset = (
-        Ganho.objects.values("data__month")
-        .annotate(ganho_valor=Sum("valor"))
-        .order_by("data__month")
-        .filter(user=request.user)
-    )
-    for entry in queryset:
-        labels.append(entry["data__month"])
-        data.append(entry["ganho_valor"])
+    for renda in rendas:
+        labels.append(renda['data'][5:7])  # Pega o mês da data
+        data.append(renda['valor'])
 
     return JsonResponse(
         data={
@@ -275,18 +335,15 @@ def view_graph2(request):
 # Gera gráfico de renda por ano
 @login_required(login_url="/auth/login")
 def view_graph3(request):
+    responseRenda = requests.get('https://api-renda.azurewebsites.net/renda/')
+    rendas = responseRenda.json()
+
     labels = []
     data = []
 
-    queryset = (
-        Ganho.objects.values("data__year")
-        .annotate(ganho_valor=Sum("valor"))
-        .order_by("data__year")
-        .filter(user=request.user)
-    )
-    for entry in queryset:
-        labels.append(entry["data__year"])
-        data.append(entry["ganho_valor"])
+    for renda in rendas:
+        labels.append(renda['data'][:4])  # Pega o ano da data
+        data.append(renda['valor'])
 
     return JsonResponse(
         data={
@@ -298,18 +355,15 @@ def view_graph3(request):
 
 @login_required(login_url="/auth/login")
 def graph_despesas_mensal(request):
+    responseDespesas = requests.get('https://api-despesa.azurewebsites.net/despesa/')
+    despesas = responseDespesas.json()
+
     labels = []
     data = []
 
-    queryset = (
-        Despesas.objects.values("data__month")
-        .annotate(ganho_valor=Sum("valor"))
-        .order_by("data__month")
-        .filter(user=request.user)
-    )
-    for entry in queryset:
-        labels.append(entry["data__month"])
-        data.append(entry["ganho_valor"])
+    for despesa in despesas:
+        labels.append(despesa['data'][5:7])  # Pega o mês da data
+        data.append(despesa['valor'])
 
     return JsonResponse(
         data={
@@ -319,20 +373,18 @@ def graph_despesas_mensal(request):
     )
 
 
+
 @login_required(login_url="/auth/login")
 def graph_despesas_anual(request):
+    responseDespesas = requests.get('https://api-despesa.azurewebsites.net/despesa/')
+    despesas = responseDespesas.json()
+
     labels = []
     data = []
 
-    queryset = (
-        Despesas.objects.values("data__year")
-        .annotate(ganho_valor=Sum("valor"))
-        .order_by("data__year")
-        .filter(user=request.user)
-    )
-    for entry in queryset:
-        labels.append(entry["data__year"])
-        data.append(entry["ganho_valor"])
+    for despesa in despesas:
+        labels.append(despesa['data'][:4])  # Pega o ano da data
+        data.append(despesa['valor'])
 
     return JsonResponse(
         data={
@@ -345,11 +397,13 @@ def graph_despesas_anual(request):
 # View gráficos de despesas
 @login_required(login_url="/auth/login")
 def exibe_graph(request):
-    despesas = Despesas.objects.filter(user=request.user)
+    #despesas = Despesas.objects.filter(user=request.user)
+    responseDespesas = requests.get('https://api-despesa.azurewebsites.net/despesa/')
+    despesas = responseDespesas.json()
     total_despesas = 0
 
     for despesa in despesas:
-        total_despesas += despesa.valor
+        total_despesas += despesa['valor']
 
     context = {"despesas": despesas, "total_despesas": total_despesas}
     return render(request, "despesas/estatistica.html", context)
@@ -358,11 +412,12 @@ def exibe_graph(request):
 # View gráficos de renda
 @login_required(login_url="/auth/login")
 def exibe_graph2(request):
-    rendas = Ganho.objects.filter(user=request.user)
+    responseRendas = requests.get('https://api-renda.azurewebsites.net/renda/')
+    rendas = responseRendas.json()
     total_ganho = 0
 
     for renda in rendas:
-        total_ganho += renda.valor
+        total_ganho += renda['valor']
 
     context = {"rendas": rendas, "total_ganho": total_ganho}
     return render(request, "rendas/estatistica_renda.html", context)

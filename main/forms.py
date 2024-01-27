@@ -31,4 +31,4 @@ class CategoriaForm(ModelForm):
 class GanhoForm(ModelForm):
     class Meta:
         model = Ganho
-        fields = ["descricao", "valor", "data"]
+        fields = "__all__"

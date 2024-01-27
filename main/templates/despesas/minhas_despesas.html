@@ -24,59 +24,36 @@
 
     <div class="container mt-5">
         {% include 'dashboard/mensagens.html' %}
-        {% if despesas.count %}
-        <div class="table">
-            <table class="table table-stripped table-hover">
-                <thead>
-                    <tr>
-                        <th>Descrição</th>
-                        <th>Categoria</th>
-                        <th>Valor</th>
-                        <th>Data</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for despesa in obj_pagina %}
-                    <tr>
-                        <td>{{despesa.descricao}}</td>
-                        <td>{{despesa.categoria}}</td>
-                        <td>{{despesa.valor}}</td>
-                        <td>{{despesa.data}}</td>
-                        <td>
-                            <a href="{% url 'editar_despesa' despesa.id %}" class="btn btn-secondary btn-sm">Editar</a>
-                            <a href="{% url 'delete_despesa' despesa.id %}" class="btn btn-danger btn-sm">Deletar</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div class="container">
-            <div class="float-right">
-                Página {{obj_pagina.number}} de {{ obj_pagina.paginator.num_pages }}
-            </div>
-            <ul class="pagination justify-content-center">
-                {% if obj_pagina.has_previous %}
-                <li {% if obj_pagina.number == 1 %} class="page-item active" {% endif %}>
-                    <a class="page-link" href="?page=1">&laquo; 1</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ obj_pagina.previous_page_number }}">Anterior</a>
-                </li>
-                {% endif %}
-                
-                {% if obj_pagina.has_next %}
-                <li class="page-item"> 
-                    <a class="page-link" href="?page={{ obj_pagina.next_page_number }}">Próximo</a>
-                </li>
-                <li class="page-item"> 
-                    <a class="page-link" href="?page={{ obj_pagina.paginator.num_pages }}">{{ obj_pagina.paginator.num_pages}} &raquo;</a>
-                </li>
-                {% endif %}
-            </ul>
-            {% endif %}
-        </div>
+        {% if despesas %}
+    <div class="table">
+        <table class="table table-stripped table-hover">
+            <thead>
+                <tr>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Valor</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for despesa in despesas %}
+                <tr>
+                    <td>{{despesa.descricao}}</td>
+                    <td>{{despesa.categoria}}</td>
+                    <td>{{despesa.valor}}</td>
+                    <td>{{despesa.data}}</td>
+                    <td>
+                        <a href="{% url 'editar_despesa' despesa.id %}" class="btn btn-secondary btn-sm">Editar</a>
+                        <a href="{% url 'delete_despesa' despesa.id %}" class="btn btn-danger btn-sm">Deletar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
     </div>
 </div>
 
